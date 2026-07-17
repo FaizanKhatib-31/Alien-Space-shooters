@@ -117,11 +117,23 @@ const TerraformButton: React.FC<{
 
 
 export const DpadControls: React.FC = () => {
-  const { pressKey, releaseKey, cameraControlsEnabled, pressedKeys, handleTerraformPress, handleTerraformRelease, terraformPower } = useAppContext();
+  const { pressKey, releaseKey, cameraControlsEnabled, pressedKeys, handleTerraformPress, handleTerraformRelease, terraformPower, controlConfig } = useAppContext();
 
   if (!cameraControlsEnabled) {
     return null;
   }
+
+  const keybinds = controlConfig?.keybinds || {};
+  const keyForward = keybinds.forward || 'w';
+  const keyBackward = keybinds.backward || 's';
+  const keyStrafeLeft = keybinds.strafeLeft || 'a';
+  const keyStrafeRight = keybinds.strafeRight || 'd';
+  const keyAscend = keybinds.ascend || ' ';
+  const keyDescend = keybinds.descend || 'shift';
+  const keyPitchUp = keybinds.pitchUp || 'arrowup';
+  const keyPitchDown = keybinds.pitchDown || 'arrowdown';
+  const keyYawLeft = keybinds.yawLeft || 'arrowleft';
+  const keyYawRight = keybinds.yawRight || 'arrowright';
 
   return (
     <div className="fixed bottom-0 left-0 right-0 p-2 sm:p-4 flex justify-between items-end pointer-events-none z-30" aria-hidden="true">
@@ -129,21 +141,21 @@ export const DpadControls: React.FC = () => {
       <div className="flex items-end gap-3 pointer-events-auto">
         <div className="grid grid-cols-3 grid-rows-3 w-28 h-28 sm:w-40 sm:h-40">
           <div className="col-start-2 row-start-1 flex justify-center items-center">
-            <DpadButton onPress={() => pressKey('w')} onRelease={() => releaseKey('w')} ariaLabel="Move Forward" isKeyPressed={pressedKeys.has('w')}><ChevronUpIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+            <DpadButton onPress={() => pressKey(keyForward)} onRelease={() => releaseKey(keyForward)} ariaLabel="Move Forward" isKeyPressed={pressedKeys.has(keyForward)}><ChevronUpIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
           </div>
           <div className="col-start-1 row-start-2 flex justify-center items-center">
-            <DpadButton onPress={() => pressKey('a')} onRelease={() => releaseKey('a')} ariaLabel="Move Left" isKeyPressed={pressedKeys.has('a')}><ChevronLeftIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+            <DpadButton onPress={() => pressKey(keyStrafeLeft)} onRelease={() => releaseKey(keyStrafeLeft)} ariaLabel="Move Left" isKeyPressed={pressedKeys.has(keyStrafeLeft)}><ChevronLeftIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
           </div>
           <div className="col-start-3 row-start-2 flex justify-center items-center">
-            <DpadButton onPress={() => pressKey('d')} onRelease={() => releaseKey('d')} ariaLabel="Move Right" isKeyPressed={pressedKeys.has('d')}><ChevronRightIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+            <DpadButton onPress={() => pressKey(keyStrafeRight)} onRelease={() => releaseKey(keyStrafeRight)} ariaLabel="Move Right" isKeyPressed={pressedKeys.has(keyStrafeRight)}><ChevronRightIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
           </div>
           <div className="col-start-2 row-start-3 flex justify-center items-center">
-            <DpadButton onPress={() => pressKey('s')} onRelease={() => releaseKey('s')} ariaLabel="Move Backward" isKeyPressed={pressedKeys.has('s')}><ChevronDownIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+            <DpadButton onPress={() => pressKey(keyBackward)} onRelease={() => releaseKey(keyBackward)} ariaLabel="Move Backward" isKeyPressed={pressedKeys.has(keyBackward)}><ChevronDownIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
           </div>
         </div>
         <div className="flex flex-col gap-2 h-28 sm:h-40 justify-center pb-1 sm:pb-2">
-          <DpadButton onPress={() => pressKey('shift')} onRelease={() => releaseKey('shift')} ariaLabel="Move Down" className="!w-10 !h-16 sm:!w-12 sm:!h-20 !rounded-xl" isKeyPressed={pressedKeys.has('shift')}><ChevronUpIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
-          <DpadButton onPress={() => pressKey(' ')} onRelease={() => releaseKey(' ')} ariaLabel="Move Up" className="!w-10 !h-16 sm:!w-12 sm:!h-20 !rounded-xl" isKeyPressed={pressedKeys.has(' ')}><ChevronDownIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+          <DpadButton onPress={() => pressKey(keyDescend)} onRelease={() => releaseKey(keyDescend)} ariaLabel="Move Down" className="!w-10 !h-16 sm:!w-12 sm:!h-20 !rounded-xl" isKeyPressed={pressedKeys.has(keyDescend)}><ChevronUpIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+          <DpadButton onPress={() => pressKey(keyAscend)} onRelease={() => releaseKey(keyAscend)} ariaLabel="Move Up" className="!w-10 !h-16 sm:!w-12 sm:!h-20 !rounded-xl" isKeyPressed={pressedKeys.has(keyAscend)}><ChevronDownIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
         </div>
       </div>
       
@@ -156,16 +168,16 @@ export const DpadControls: React.FC = () => {
       <div className="pointer-events-auto">
         <div className="grid grid-cols-3 grid-rows-3 w-28 h-28 sm:w-40 sm:h-40">
           <div className="col-start-2 row-start-1 flex justify-center items-center">
-            <DpadButton onPress={() => pressKey('arrowup')} onRelease={() => releaseKey('arrowup')} ariaLabel="Look Up" isKeyPressed={pressedKeys.has('arrowup')}><ChevronUpIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+            <DpadButton onPress={() => pressKey(keyPitchUp)} onRelease={() => releaseKey(keyPitchUp)} ariaLabel="Look Up" isKeyPressed={pressedKeys.has(keyPitchUp)}><ChevronUpIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
           </div>
           <div className="col-start-1 row-start-2 flex justify-center items-center">
-            <DpadButton onPress={() => pressKey('arrowleft')} onRelease={() => releaseKey('arrowleft')} ariaLabel="Look Left" isKeyPressed={pressedKeys.has('arrowleft')}><ChevronLeftIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+            <DpadButton onPress={() => pressKey(keyYawLeft)} onRelease={() => releaseKey(keyYawLeft)} ariaLabel="Look Left" isKeyPressed={pressedKeys.has(keyYawLeft)}><ChevronLeftIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
           </div>
           <div className="col-start-3 row-start-2 flex justify-center items-center">
-            <DpadButton onPress={() => pressKey('arrowright')} onRelease={() => releaseKey('arrowright')} ariaLabel="Look Right" isKeyPressed={pressedKeys.has('arrowright')}><ChevronRightIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+            <DpadButton onPress={() => pressKey(keyYawRight)} onRelease={() => releaseKey(keyYawRight)} ariaLabel="Look Right" isKeyPressed={pressedKeys.has(keyYawRight)}><ChevronRightIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
           </div>
           <div className="col-start-2 row-start-3 flex justify-center items-center">
-            <DpadButton onPress={() => pressKey('arrowdown')} onRelease={() => releaseKey('arrowdown')} ariaLabel="Look Down" isKeyPressed={pressedKeys.has('arrowdown')}><ChevronDownIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
+            <DpadButton onPress={() => pressKey(keyPitchDown)} onRelease={() => releaseKey(keyPitchDown)} ariaLabel="Look Down" isKeyPressed={pressedKeys.has(keyPitchDown)}><ChevronDownIcon className="w-5 h-5 sm:w-7 sm:h-7" /></DpadButton>
           </div>
         </div>
       </div>

@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { XCircleIcon, TerraformIcon, AdjustmentsIcon, SparklesIcon } from './Icons';
-import { ControlConfig, Modulation, ModulationSource, ModulationTarget, ShipModulation, ShipModulationTarget } from '../types';
+import { ControlConfig, KeybindsConfig, Modulation, ModulationSource, ModulationTarget, ShipModulation, ShipModulationTarget } from '../types';
 import { generateAudioModulation } from '../services/GeminiService';
 import { v4 as uuidv4 } from 'uuid';
 import { ENABLE_AI_FEATURES } from '../config';
@@ -747,6 +747,58 @@ const TerraformPanel: React.FC = () => {
 
 const ControlsConfigPanel: React.FC = () => {
     const { controlConfig, handleControlConfigChange } = useAppContext();
+    const [rebindingAction, setRebindingAction] = useState<keyof KeybindsConfig | null>(null);
+
+    const ACTIONS: { key: keyof KeybindsConfig; label: string; defaultKey: string }[] = [
+        { key: 'forward', label: 'Move Forward', defaultKey: 'w' },
+        { key: 'backward', label: 'Move Backward', defaultKey: 's' },
+        { key: 'strafeLeft', label: 'Strafe Left', defaultKey: 'a' },
+        { key: 'strafeRight', label: 'Strafe Right', defaultKey: 'd' },
+        { key: 'ascend', label: 'Fly Up / Ascend', defaultKey: ' ' },
+        { key: 'descend', label: 'Fly Down / Descend', defaultKey: 'shift' },
+        { key: 'yawLeft', label: 'Turn Left', defaultKey: 'arrowleft' },
+        { key: 'yawRight', label: 'Turn Right', defaultKey: 'arrowright' },
+        { key: 'pitchUp', label: 'Look Up', defaultKey: 'arrowup' },
+        { key: 'pitchDown', label: 'Look Down', defaultKey: 'arrowdown' },
+        { key: 'fire', label: 'Fire Weapons', defaultKey: 'f' },
+    ];
+
+    const formatKeyName = (key: string): string => {
+        if (!key) return 'None';
+        if (key === ' ') return 'Space';
+        if (key.startsWith('arrow')) {
+            return 'Arrow ' + key.slice(5).charAt(0).toUpperCase() + key.slice(6);
+        }
+        return key.charAt(0).toUpperCase() + key.slice(1);
+    };
+
+    useEffect(() => {
+        if (!rebindingAction) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const newKey = e.key.toLowerCase();
+            
+            // Update keybinds
+            const currentKeybinds = controlConfig.keybinds || {};
+            const updatedKeybinds = {
+                ...currentKeybinds,
+                [rebindingAction]: newKey
+            };
+
+            handleControlConfigChange('keybinds', updatedKeybinds);
+            setRebindingAction(null);
+        };
+
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => window.removeEventListener('keydown', handleKeyDown, true);
+    }, [rebindingAction, controlConfig, handleControlConfigChange]);
+
+    const handleResetKeybinds = () => {
+        handleControlConfigChange('keybinds', {});
+    };
 
     const inversionControls: { key: keyof ControlConfig; label: string; description: string }[] = [
         { key: 'invertForward', label: 'Forward / Backward', description: "Invert W/S keys for camera movement." },
@@ -765,33 +817,81 @@ const ControlsConfigPanel: React.FC = () => {
     ];
 
     return (
-        <div className="space-y-4">
-            <div>
-                <h3 className="text-sm font-semibold text-gray-400 px-1 mb-2">Inversions</h3>
-                <div className="space-y-2">
-                    {inversionControls.map(control => (
-                        <ToggleSwitch
-                            key={control.key}
-                            label={control.label}
-                            description={control.description}
-                            checked={!!controlConfig[control.key]}
-                            onChange={(checked) => handleControlConfigChange(control.key, checked)}
-                        />
-                    ))}
+        <div className="space-y-6">
+            <div className="space-y-4">
+                <div>
+                    <h3 className="text-sm font-semibold text-gray-400 px-1 mb-2">Inversions</h3>
+                    <div className="space-y-2">
+                        {inversionControls.map(control => (
+                            <ToggleSwitch
+                                key={control.key}
+                                label={control.label}
+                                description={control.description}
+                                checked={!!controlConfig[control.key]}
+                                onChange={(checked) => handleControlConfigChange(control.key, checked)}
+                            />
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-sm font-semibold text-gray-400 px-1 mb-2">Velocities</h3>
+                    <div className="space-y-2">
+                        {velocityControls.map(control => (
+                            <ControlSlider
+                                key={control.key}
+                                label={control.label}
+                                description={control.description}
+                                value={(controlConfig[control.key] as number) ?? 0.3}
+                                onChange={(value) => handleControlConfigChange(control.key, value)}
+                            />
+                        ))}
+                    </div>
                 </div>
             </div>
-            <div>
-                <h3 className="text-sm font-semibold text-gray-400 px-1 mb-2">Velocities</h3>
-                <div className="space-y-2">
-                    {velocityControls.map(control => (
-                        <ControlSlider
-                            key={control.key}
-                            label={control.label}
-                            description={control.description}
-                            value={(controlConfig[control.key] as number) ?? 0.3}
-                            onChange={(value) => handleControlConfigChange(control.key, value)}
-                        />
-                    ))}
+
+            <div className="pt-4 border-t border-gray-700/50">
+                <div className="flex justify-between items-center px-1 mb-3">
+                    <h3 className="text-sm font-semibold text-gray-400">Keybindings</h3>
+                    <button
+                        onClick={handleResetKeybinds}
+                        className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors px-2 py-1 rounded bg-cyan-950/40 border border-cyan-800/50"
+                    >
+                        Reset Keybinds
+                    </button>
+                </div>
+                
+                {rebindingAction && (
+                    <div className="mb-3 p-2 bg-cyan-950/30 border border-cyan-700/40 rounded-lg text-center animate-pulse">
+                        <span className="text-xs text-cyan-300">
+                            Press any key on your keyboard to bind <span className="font-bold text-white uppercase">"{rebindingAction}"</span>...
+                        </span>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {ACTIONS.map(action => {
+                        const currentKey = controlConfig.keybinds?.[action.key] ?? action.defaultKey;
+                        const isThisRebinding = rebindingAction === action.key;
+
+                        return (
+                            <div 
+                                key={action.key} 
+                                className="flex justify-between items-center p-2 rounded bg-gray-800/40 border border-gray-700/50 hover:bg-gray-800/60 transition-colors"
+                            >
+                                <span className="text-xs text-gray-300 font-medium">{action.label}</span>
+                                <button
+                                    onClick={() => setRebindingAction(action.key)}
+                                    className={`px-3 py-1 text-xs rounded font-mono min-w-[80px] text-center border transition-all ${
+                                        isThisRebinding 
+                                        ? 'bg-cyan-500 border-cyan-400 text-black font-bold animate-pulse' 
+                                        : 'bg-gray-900 border-gray-700 text-cyan-400 hover:border-cyan-500 hover:text-white'
+                                    }`}
+                                >
+                                    {isThisRebinding ? 'Press Key...' : formatKeyName(currentKey)}
+                                </button>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
@@ -1189,9 +1289,9 @@ export const ControlsPanel: React.FC = () => {
   };
 
   useEffect(() => {
-    // When EDITMODE is off, we restrict access to complex tabs, but allow Ship and Sound.
+    // When EDITMODE is off, we restrict access to complex tabs, but allow Ship, Sound, and Controls.
     // We force switch to Sliders ONLY if the current tab is one of the restricted ones.
-    const restrictedTabs = ['terraform', 'collision', 'controls', 'settings'];
+    const restrictedTabs = ['terraform', 'collision', 'settings'];
     if (!EDITMODE && restrictedTabs.includes(activeTab)) {
       setActiveTab('sliders');
     }
@@ -1302,12 +1402,12 @@ export const ControlsPanel: React.FC = () => {
             <TabButton label="World" isActive={activeTab === 'sliders'} onClick={() => setActiveTab('sliders')} />
             {cameraControlsEnabled && <TabButton label="Ship" isActive={activeTab === 'ship'} onClick={() => setActiveTab('ship')} />}
             <TabButton label="Sound" isActive={activeTab === 'sound'} onClick={() => setActiveTab('sound')} />
+            {cameraControlsEnabled && <TabButton label="Controls" isActive={activeTab === 'controls'} onClick={() => setActiveTab('controls')} />}
             
             {EDITMODE && (
                 <>
                     <TabButton label="Terraform" isActive={activeTab === 'terraform'} onClick={() => setActiveTab('terraform')} />
                     {cameraControlsEnabled && <TabButton label="Collision" isActive={activeTab === 'collision'} onClick={() => setActiveTab('collision')} />}
-                    {cameraControlsEnabled && <TabButton label="Controls" isActive={activeTab === 'controls'} onClick={() => setActiveTab('controls')} />}
                     <TabButton label="System" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
                 </>
             )}

@@ -59,7 +59,7 @@ export interface AppContextType {
   cameraControlsEnabled: boolean;
   pressedKeys: Set<string>;
   controlConfig: ControlConfig;
-  handleControlConfigChange: (key: keyof ControlConfig, value: boolean | number) => void;
+  handleControlConfigChange: (key: keyof ControlConfig, value: any) => void;
   isMoving: boolean;
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;

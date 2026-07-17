@@ -1156,7 +1156,7 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
     });
   }, []);
   
-  const handleControlConfigChange = useCallback((key: keyof ControlConfig, value: boolean | number) => {
+  const handleControlConfigChange = useCallback((key: keyof ControlConfig, value: any) => {
     setControlConfig(prev => ({ ...prev, [key]: value }));
   }, []);
 
@@ -1339,16 +1339,28 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
 
         // --- Physics & Camera ---
         const keys = keysPressed.current;
-        let fwd = (keys.has('w') ? 1 : 0) - (keys.has('s') ? 1 : 0);
+        const keybinds = controls.keybinds || {};
+        const keyForward = keybinds.forward || 'w';
+        const keyBackward = keybinds.backward || 's';
+        const keyStrafeLeft = keybinds.strafeLeft || 'a';
+        const keyStrafeRight = keybinds.strafeRight || 'd';
+        const keyAscend = keybinds.ascend || ' ';
+        const keyDescend = keybinds.descend || 'shift';
+        const keyPitchUp = keybinds.pitchUp || 'arrowup';
+        const keyPitchDown = keybinds.pitchDown || 'arrowdown';
+        const keyYawLeft = keybinds.yawLeft || 'arrowleft';
+        const keyYawRight = keybinds.yawRight || 'arrowright';
+
+        let fwd = (keys.has(keyForward) ? 1 : 0) - (keys.has(keyBackward) ? 1 : 0);
         if (controls.invertForward) fwd = -fwd;
-        let str = (keys.has('d') ? 1 : 0) - (keys.has('a') ? 1 : 0);
+        let str = (keys.has(keyStrafeRight) ? 1 : 0) - (keys.has(keyStrafeLeft) ? 1 : 0);
         if (controls.invertStrafe) str = -str;
-        let asc = (keys.has(' ') ? 1 : 0) - (keys.has('shift') ? 1 : 0);
+        let asc = (keys.has(keyAscend) ? 1 : 0) - (keys.has(keyDescend) ? 1 : 0);
         if (controls.invertAscend) asc = -asc;
         
-        let pitchInput = (keys.has('arrowdown') ? 1 : 0) - (keys.has('arrowup') ? 1 : 0);
+        let pitchInput = (keys.has(keyPitchDown) ? 1 : 0) - (keys.has(keyPitchUp) ? 1 : 0);
         if (controls.invertPitch) pitchInput = -pitchInput;
-        let yawInput = (keys.has('arrowright') ? 1 : 0) - (keys.has('arrowleft') ? 1 : 0);
+        let yawInput = (keys.has(keyYawRight) ? 1 : 0) - (keys.has(keyYawLeft) ? 1 : 0);
         if (controls.invertYaw) yawInput = -yawInput;
 
         const [p, y] = cameraRef.current.rotation;
@@ -1639,7 +1651,9 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
             }
 
             // Player Shooting Trigger
-            const firePressed = keysPressed.current.has('f') || keysPressed.current.has('enter') || triggerFireRef.current;
+            const keybinds = controls.keybinds || {};
+            const keyFire = keybinds.fire || 'f';
+            const firePressed = keysPressed.current.has(keyFire) || keysPressed.current.has('enter') || triggerFireRef.current;
             if (firePressed && gunCooldownRef.current <= 0) {
                 gunCooldownRef.current = 0.22; // Quick shooting rate (about 4.5 shots per second)
                 triggerFireRef.current = false;
@@ -1727,6 +1741,7 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
                 id: uuidv4(),
                 position: [spawnX, spawnY, spawnZ],
                 velocity: [0, 0, 0],
+                center: [currentPos[0], currentPos[1], currentPos[2]],
                 health: maxHealth,
                 maxHealth,
                 size,
@@ -1744,6 +1759,10 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
         // Update active aliens
         for (let i = 0; i < aliensRef.current.length; i++) {
             const a = aliensRef.current[i];
+            if (!a.center) {
+                a.center = [currentPos[0], currentPos[1], currentPos[2]];
+            }
+
             const ax = a.position[0], ay = a.position[1], az = a.position[2];
             const dx = currentPos[0] - ax;
             const dy = currentPos[1] - ay;
@@ -1757,18 +1776,35 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
                 targetVX = (dx / dPlayer) * 1.5;
                 targetVY = (dy / dPlayer) * 1.0;
                 targetVZ = (dz / dPlayer) * 1.5;
+
+                // Sync orbit center to current alien position so orbit transitions naturally on arrival
+                a.center[0] = ax;
+                a.center[1] = ay;
+                a.center[2] = az;
             } else if (dPlayer < 4.5) {
                 // Too close, glide away from player (Slower backing away speed)
                 targetVX = -(dx / dPlayer) * 1.0;
                 targetVY = -(dy / dPlayer) * 1.0;
                 targetVZ = -(dz / dPlayer) * 1.0;
+
+                // Sync orbit center to current alien position so orbit transitions naturally on departure
+                a.center[0] = ax;
+                a.center[1] = ay;
+                a.center[2] = az;
             } else {
-                // Orbit and hover in space (Slower orbiting adjustments)
+                // Drift the local orbit center slowly towards the player.
+                // This lets player's forward/backward/strafing movements actually affect relative distance.
+                const driftRate = 0.85; // Natural lag and inertia
+                a.center[0] += (currentPos[0] - a.center[0]) * driftRate * dt;
+                a.center[1] += (currentPos[1] - a.center[1]) * driftRate * dt;
+                a.center[2] += (currentPos[2] - a.center[2]) * driftRate * dt;
+
+                // Orbit around the drifting center point instead of the player directly
                 const hoverY = Math.sin(now * 1.6 + a.phaseY) * 0.7;
                 const angle = now * a.orbitSpeed + a.phase;
-                const targetX = currentPos[0] + Math.sin(angle) * a.orbitRadius;
-                const targetZ = currentPos[2] + Math.cos(angle) * a.orbitRadius;
-                const targetY = currentPos[1] + hoverY;
+                const targetX = a.center[0] + Math.sin(angle) * a.orbitRadius;
+                const targetZ = a.center[2] + Math.cos(angle) * a.orbitRadius;
+                const targetY = a.center[1] + hoverY;
 
                 targetVX = (targetX - ax) * 0.3;
                 targetVY = (targetY - ay) * 0.3;

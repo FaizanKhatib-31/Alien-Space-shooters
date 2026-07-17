@@ -16,9 +16,6 @@ import { useAppStoreComplete } from './hooks/useAppStore';
 import { GearIcon, SpeakerWaveIcon, SpeakerXMarkIcon, RocketLaunchIcon } from './components/Icons';
 import { SHOW_SETTINGS_BUTTON, SHOW_SHARE_BUTTON, SHOW_HUD_BUTTON, SHOW_MUTE_BUTTON } from './config';
 
-// Optimization: Define static constant outside component to avoid recreation every render
-const NAV_KEYS = ['w', 'a', 's', 'd', ' ', 'shift', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
-
 const AppContent: React.FC = () => {
     const {
         canvasSize,
@@ -37,6 +34,7 @@ const AppContent: React.FC = () => {
         isMoving,
         isInteracting,
         pressedKeys,
+        controlConfig,
         viewMode,
         setViewMode,
         viewModeTransition,
@@ -123,7 +121,20 @@ const AppContent: React.FC = () => {
     }, []);
 
     // Determine if we should drop quality for performance.
-    const isNavigating = NAV_KEYS.some(key => pressedKeys.has(key));
+    const keybinds = controlConfig?.keybinds || {};
+    const activeNavKeys = [
+        keybinds.forward || 'w',
+        keybinds.backward || 's',
+        keybinds.strafeLeft || 'a',
+        keybinds.strafeRight || 'd',
+        keybinds.ascend || ' ',
+        keybinds.descend || 'shift',
+        keybinds.pitchUp || 'arrowup',
+        keybinds.pitchDown || 'arrowdown',
+        keybinds.yawLeft || 'arrowleft',
+        keybinds.yawRight || 'arrowright',
+    ];
+    const isNavigating = activeNavKeys.some(key => pressedKeys.has(key));
     const shouldReduceQuality = isMoving || isInteracting || isNavigating;
 
     const toggleViewMode = () => {

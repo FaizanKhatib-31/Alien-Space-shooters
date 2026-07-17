@@ -41,6 +41,20 @@ export interface TerraformConfig {
   targets: TerraformTarget[];
 }
 
+export interface KeybindsConfig {
+    forward?: string;
+    backward?: string;
+    strafeLeft?: string;
+    strafeRight?: string;
+    ascend?: string;
+    descend?: string;
+    pitchUp?: string;
+    pitchDown?: string;
+    yawLeft?: string;
+    yawRight?: string;
+    fire?: string;
+}
+
 export interface ControlConfig {
     invertStrafe?: boolean;
     invertForward?: boolean;
@@ -52,6 +66,7 @@ export interface ControlConfig {
     ascendVelocity?: number;
     pitchVelocity?: number;
     yawVelocity?: number;
+    keybinds?: KeybindsConfig;
 }
 
 // Expanded Inputs
@@ -187,6 +202,7 @@ export interface Alien {
     id: string;
     position: [number, number, number];
     velocity: [number, number, number];
+    center?: [number, number, number]; // Anchor point around which the alien orbits/hovers
     health: number;
     maxHealth: number;
     size: number;

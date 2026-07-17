@@ -628,6 +628,28 @@ export const Hud: React.FC = () => {
                 className="absolute inset-0 z-10 pointer-events-none"
             />
 
+            {/* Floating High-fidelity Healthbar Overlay */}
+            {!isGameOver && (
+                <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-auto bg-black/60 px-4 py-2.5 rounded-xl border border-white/15 backdrop-blur-md shadow-[0_4px_25px_rgba(0,0,0,0.6)] z-20 transition-all duration-300">
+                    <div className="flex justify-between w-72 text-xs font-mono mb-1.5 text-white tracking-widest font-bold">
+                        <span className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            SHIELD INTEGRITY
+                        </span>
+                        <span>{playerHealth} / {playerMaxHealth}</span>
+                    </div>
+                    {/* Health Bar: White represents Total Health/Capacity, Green represents Remaining Health */}
+                    <div className="w-72 h-4 bg-white rounded-full overflow-hidden p-0.5 relative shadow-inner border border-white">
+                        <motion.div 
+                            className="h-full bg-green-500 rounded-full"
+                            initial={{ width: '100%' }}
+                            animate={{ width: `${Math.max(0, Math.min(100, (playerHealth / playerMaxHealth) * 100))}%` }}
+                            transition={{ type: 'spring', stiffness: 90, damping: 15 }}
+                        />
+                    </div>
+                </div>
+            )}
+
             {/* Neon Game Over Screen Overlay */}
             <AnimatePresence>
                 {showGameOverUI && (
