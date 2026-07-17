@@ -1353,8 +1353,8 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
 
         const [p, y] = cameraRef.current.rotation;
         const currentPos = cameraRef.current.position;
-        const spd = 1.0;
-        const rotSpd = 1.0;
+        const spd = 2.0; // Faster player translation movement
+        const rotSpd = 1.8; // Snappier and faster camera turning
 
         // Flight Pitch Offset: Allows flying level while looking slightly down (nose-down attitude)
         // This sets the "neutral" joystick position to be slightly pitched down relative to the camera view
@@ -1425,8 +1425,8 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
         // Rotation
         const tRotX = pitchInput * rotSpd * (controls.pitchVelocity ?? 0.3);
         const tRotY = yawInput * rotSpd * (controls.yawVelocity ?? 0.3);
-        cameraAngularVelocityRef.current[0] += (tRotX - cameraAngularVelocityRef.current[0]) * 0.07;
-        cameraAngularVelocityRef.current[1] += (tRotY - cameraAngularVelocityRef.current[1]) * 0.07;
+        cameraAngularVelocityRef.current[0] += (tRotX - cameraAngularVelocityRef.current[0]) * 0.15; // Snappier response
+        cameraAngularVelocityRef.current[1] += (tRotY - cameraAngularVelocityRef.current[1]) * 0.15; // Snappier response
         
         // OPTIMIZATION: Mutate rotation array
         cameraRef.current.rotation[0] = Math.max(-1.57, Math.min(1.57, p + cameraAngularVelocityRef.current[0] * dt));
@@ -1706,20 +1706,20 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
             let maxHealth = 50;
             let size = 0.4;
             let color = '#ff00ff'; // Neon Magenta for scout
-            let orbitSpeed = 0.5 + Math.random() * 0.4;
+            let orbitSpeed = 0.2 + Math.random() * 0.15; // Slower scout orbit speed
             let shootInterval = 1.8 + Math.random() * 1.2;
 
             if (type === 'drone') {
                 maxHealth = 100;
                 size = 0.6;
                 color = '#ffaa00'; // Neon Amber/Orange for drone
-                orbitSpeed = 0.3 + Math.random() * 0.2;
+                orbitSpeed = 0.1 + Math.random() * 0.1; // Slower drone orbit speed
                 shootInterval = 2.4 + Math.random() * 1.5;
             } else if (type === 'boss') {
                 maxHealth = 300;
                 size = 1.1;
                 color = '#ff0033'; // Neon Ruby Crimson for boss
-                orbitSpeed = 0.12 + Math.random() * 0.08;
+                orbitSpeed = 0.05 + Math.random() * 0.03; // Slower boss orbit speed
                 shootInterval = 1.1 + Math.random() * 0.7;
             }
 
@@ -1753,26 +1753,26 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
             let targetVX = 0, targetVY = 0, targetVZ = 0;
 
             if (dPlayer > 24.0) {
-                // Too far away, accelerate directly towards player
-                targetVX = (dx / dPlayer) * 4.0;
-                targetVY = (dy / dPlayer) * 2.5;
-                targetVZ = (dz / dPlayer) * 4.0;
+                // Too far away, accelerate directly towards player (Slower chase speed)
+                targetVX = (dx / dPlayer) * 1.5;
+                targetVY = (dy / dPlayer) * 1.0;
+                targetVZ = (dz / dPlayer) * 1.5;
             } else if (dPlayer < 4.5) {
-                // Too close, glide away from player
-                targetVX = -(dx / dPlayer) * 2.5;
-                targetVY = -(dy / dPlayer) * 2.5;
-                targetVZ = -(dz / dPlayer) * 2.5;
+                // Too close, glide away from player (Slower backing away speed)
+                targetVX = -(dx / dPlayer) * 1.0;
+                targetVY = -(dy / dPlayer) * 1.0;
+                targetVZ = -(dz / dPlayer) * 1.0;
             } else {
-                // Orbit and hover in space
+                // Orbit and hover in space (Slower orbiting adjustments)
                 const hoverY = Math.sin(now * 1.6 + a.phaseY) * 0.7;
                 const angle = now * a.orbitSpeed + a.phase;
                 const targetX = currentPos[0] + Math.sin(angle) * a.orbitRadius;
                 const targetZ = currentPos[2] + Math.cos(angle) * a.orbitRadius;
                 const targetY = currentPos[1] + hoverY;
 
-                targetVX = (targetX - ax) * 0.7;
-                targetVY = (targetY - ay) * 0.7;
-                targetVZ = (targetZ - az) * 0.7;
+                targetVX = (targetX - ax) * 0.3;
+                targetVY = (targetY - ay) * 0.3;
+                targetVZ = (targetZ - az) * 0.3;
             }
 
             // Smoothly interpolate velocity
@@ -1794,8 +1794,8 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
                 const vDirZ = dz / dPlayer + (Math.random() - 0.5) * 0.12;
                 const len = Math.sqrt(vDirX*vDirX + vDirY*vDirY + vDirZ*vDirZ);
 
-                const alSpeed = a.type === 'scout' ? 9.0 : a.type === 'drone' ? 7.0 : 6.0;
-                const alDamage = a.type === 'boss' ? 25 : a.type === 'drone' ? 15 : 10;
+                const alSpeed = a.type === 'scout' ? 4.5 : a.type === 'drone' ? 3.5 : 2.5; // Slower alien projectiles
+                const alDamage = a.type === 'boss' ? 6 : a.type === 'drone' ? 3 : 1; // Significantly less damage
 
                 alienLasersRef.current.push({
                     id: uuidv4(),
@@ -1874,9 +1874,8 @@ export const useAppStore = (): Omit<AppContextType, keyof ReturnType<typeof useD
                             });
                         }
 
-                        // Award score points
-                        const points = a.type === 'boss' ? 500 : a.type === 'drone' ? 150 : 100;
-                        scoreRef.current += points;
+                        // Award score points (1 point per alien killed, representing total kills)
+                        scoreRef.current += 1;
                         setScore(scoreRef.current);
 
                         aliensRef.current.splice(j, 1);

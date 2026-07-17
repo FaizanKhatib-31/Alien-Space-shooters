@@ -430,26 +430,6 @@ export const Hud: React.FC = () => {
                     ctx.stroke();
                 }
 
-                // --- CENTER WEAPON CROSSHAIR ---
-                ctx.strokeStyle = `rgba(0, 255, 255, ${0.45 * hudAlpha})`;
-                ctx.beginPath();
-                // Outer circle brackets
-                ctx.arc(cx, cy, 30, -Math.PI/4, Math.PI/4);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.arc(cx, cy, 30, Math.PI * 0.75, Math.PI * 1.25);
-                ctx.stroke();
-
-                // Center dot
-                ctx.beginPath();
-                ctx.moveTo(cx - 15, cy); ctx.lineTo(cx - 4, cy);
-                ctx.moveTo(cx + 4, cy); ctx.lineTo(cx + 15, cy);
-                ctx.moveTo(cx, cy - 15); ctx.lineTo(cx, cy - 4);
-                ctx.moveTo(cx, cy + 4); ctx.lineTo(cx, cy + 15);
-                ctx.stroke();
-                ctx.fillStyle = `rgba(0, 255, 255, ${0.8 * hudAlpha})`;
-                ctx.fillRect(cx - 1.5, cy - 1.5, 3, 3);
-
                 // --- READOUTS ---
                 const altText = `ALT: ${altitude.toFixed(2)}`;
                 const vsText = `V/S: ${(vY * 10).toFixed(2)}`;
@@ -488,6 +468,28 @@ export const Hud: React.FC = () => {
                 ctx.fillStyle = `rgba(${baseColorStr}, ${0.85 * hudAlpha})`;
                 ctx.fillRect(crX - 3, indicatorY - 2, 6, 4);
             }
+
+            // --- CENTER WEAPON CROSSHAIR (ALWAYS VISIBLE) ---
+            const crosshairAlpha = Math.max(0.75, hudAlpha);
+            ctx.strokeStyle = `rgba(0, 255, 255, ${0.45 * crosshairAlpha})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Outer circle brackets
+            ctx.arc(cx, cy, 30, -Math.PI/4, Math.PI/4);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cx, cy, 30, Math.PI * 0.75, Math.PI * 1.25);
+            ctx.stroke();
+
+            // Center dot
+            ctx.beginPath();
+            ctx.moveTo(cx - 15, cy); ctx.lineTo(cx - 4, cy);
+            ctx.moveTo(cx + 4, cy); ctx.lineTo(cx + 15, cy);
+            ctx.moveTo(cx, cy - 15); ctx.lineTo(cx, cy - 4);
+            ctx.moveTo(cx, cy + 4); ctx.lineTo(cx, cy + 15);
+            ctx.stroke();
+            ctx.fillStyle = `rgba(0, 255, 255, ${0.8 * crosshairAlpha})`;
+            ctx.fillRect(cx - 1.5, cy - 1.5, 3, 3);
 
             // --- SHIELD STATUS COCKPIT DIAL (BOTTOM HEALTHBAR) ---
             if (hudAlpha > 0.01) {
@@ -553,21 +555,21 @@ export const Hud: React.FC = () => {
                 }
             }
 
-            // --- TACTICAL PANEL (TOP-LEFT LEADERBOARD) ---
-            if (hudAlpha > 0.01) {
+            // --- TACTICAL PANEL (TOP-LEFT PANEL) ---
+            if (true) {
                 const cardW = 200;
                 const cardH = 90;
                 const cardX = 16;
                 const cardY = 80;
 
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-                ctx.strokeStyle = 'rgba(0, 255, 255, 0.22)';
-                ctx.lineWidth = 1;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.35)';
+                ctx.lineWidth = 1.5;
                 ctx.fillRect(cardX, cardY, cardW, cardH);
                 ctx.strokeRect(cardX, cardY, cardW, cardH);
 
                 // Sub-header lines
-                ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.15)';
                 ctx.beginPath();
                 ctx.moveTo(cardX + 10, cardY + 24);
                 ctx.lineTo(cardX + cardW - 10, cardY + 24);
@@ -580,8 +582,8 @@ export const Hud: React.FC = () => {
 
                 ctx.font = '10px monospace';
                 ctx.fillStyle = '#ffffff';
-                ctx.fillText(`INTEGRAL SCORE:  ${score.toString().padStart(6, '0')}`, cardX + 10, cardY + 40);
-                ctx.fillText(`THREAT LEVELS:   ${activeAliens.length} IN AREA`, cardX + 10, cardY + 54);
+                ctx.fillText(`ALIENS ELIMINATED: ${score}`, cardX + 10, cardY + 40);
+                ctx.fillText(`THREAT LEVELS:     ${activeAliens.length} IN AREA`, cardX + 10, cardY + 54);
                 
                 const sysStatus = playerHealth > 50 ? 'NOMINAL' : playerHealth > 25 ? 'DAMAGE DETECTED' : 'CRITICAL FAULT';
                 const sysColor = playerHealth > 50 ? '#00ffcc' : playerHealth > 25 ? '#ffbb00' : '#ff3333';
